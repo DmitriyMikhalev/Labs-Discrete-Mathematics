@@ -26,6 +26,19 @@ def choose_set(sets: tuple, max_option: int) -> Optional[int]:
     return option
 
 
+def contains(sets: tuple) -> None:
+    """Функция, выводящая сообщение о содержании введенного числа в выбранном
+    множестве. Аргументы: sets - кортеж множеств. Возвращает None.
+    """
+    value = input_int("\nВведите проверяемое число: ")
+    alias_set = choose_set(sets, 5)
+
+    print(f"Число {value}", end="")
+    if value not in sets[alias_set - 1]:
+        print(" не", end="")
+    print(f" содержится во множестве {chr(64 + alias_set)}")
+
+
 def difference(sets: tuple) -> None:
     """Функция, выводящая результат вычитания множеств.
     Аргументы: sets - кортеж множеств. Возвращает None.
@@ -124,17 +137,17 @@ def input_set(sets: tuple, values_range: range) -> None:
 
         return
 
-    second_option = 0
-    while second_option not in (1, 2):
-        second_option = handle_menu(
+    option = 0
+    while option not in (1, 2):
+        option = handle_menu(
             "\n1. Ввести вручную.\n2. Сгенерировать\n\nВыберите действие: ", 5
         )
 
-        if second_option is None:
+        if option is None:
             return
 
     alias_set = sets[set_number - 1]
-    if second_option == 1:
+    if option == 1:
         print("\nДля выхода напишите 'стоп'.")
         while True:
             value = input_int(
@@ -193,18 +206,19 @@ def main() -> None:
         6: (symmetric_difference, (sets,),),
         7: (show_addition, (sets, set_universum,),),
         8: (show_universum, (set_universum,),),
+        9: (contains, (sets,),),
     }
 
     while True:
         option = handle_menu(
             "\n1. Создать множество\n2. Показать множества\n3. Объединение\n"
             + "4. Разность\n5. Пересечение\n6. Симметрическая разность\n"
-            + "7. Дополнение\n8. Показать универсум.\n9. Выход\n"
-            + "\nВыберите действие: ",
-            9
+            + "7. Дополнение\n8. Показать универсум\n9. Проверка вхождения\n"
+            + "10. Выход\n\nВыберите действие: ",
+            10
         )
 
-        if option == 9:
+        if option == 10:
             return
 
         func, args = options.get(option)
