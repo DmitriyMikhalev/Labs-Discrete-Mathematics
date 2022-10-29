@@ -8,7 +8,8 @@ def choose_set(sets: tuple, max_option: int) -> Optional[int]:
     """Args: sets - кортеж, max_option - число. Возвращает число, выбранное в
     диапазоне [1, max_option]. Если введено max_option + 1, возвращается None.
     """
-    option = 0
+    EXIT_VALUE = 6
+    option = None
     message = [f"\n{i}. Множество {chr(64 + i)}: {sets[i - 1] if len(sets[i - 1]) != 0 else '{}'}" for i in range(1, 6)]
 
     while option not in range(1, max_option + 1):
@@ -17,11 +18,8 @@ def choose_set(sets: tuple, max_option: int) -> Optional[int]:
             max_option
         )
 
-        if option == 6:
-            return 6
-
-        if option is None:
-            return
+        if option in (EXIT_VALUE, None):
+            break
 
     return option
 
@@ -75,14 +73,12 @@ def handle_menu(message: str, max_option: int) -> Optional[int]:
     возвращен None.
     """
     option = input_int(message=message)
-    if option is None:
-        return None
+    if option:
+        while (option < 1 or option > max_option):
+            option = input_int(message=message)
 
-    while (option < 1 or option > max_option):
-        option = input_int(message=message)
-
-        if option is None:
-            return None
+            if option is None:
+                break
 
     return option
 
@@ -96,11 +92,13 @@ def input_int(message: str) -> Optional[int]:
     if line.isdigit() or line[1:].isdigit() and line[0] in ("+", "-",):
         return int(line)
     elif line == "стоп":
-        return
+        return None
     elif any(i in (".", ",",) for i in line):
         print("Допустимы только целые числа.")
     else:
         print("Введено не число.")
+
+    return None
 
 
 def input_section() -> tuple[int, int]:
@@ -109,12 +107,11 @@ def input_section() -> tuple[int, int]:
     расположены не по возрастанию, повторно запрашивается верхняя граница.
     Возвращает кортеж вида (min, max).
     """
-    first_value = None
+    first_value = second_value = None
     while first_value is None:
         first_value = input_int("Введите нижнюю границу области значений: ")
 
-    second_value = first_value - 1
-    while first_value is None or second_value <= first_value:
+    while second_value is None or second_value <= first_value:
         second_value = input_int("Введите верхнюю границу области значений: ")
 
     return first_value, second_value
@@ -137,7 +134,7 @@ def input_set(sets: tuple, values_range: range) -> None:
 
         return
 
-    option = 0
+    option = None
     while option not in (1, 2):
         option = handle_menu(
             "\n1. Ввести вручную.\n2. Сгенерировать\n\nВыберите действие: ", 5
@@ -186,12 +183,12 @@ def main() -> None:
     диапазон значений values_range, и так далее. В этой функции вызываются
     остальные функции в зависимости от выбранного действия. Возвращает None.
     """
-    set_A = set()
-    set_B = set()
-    set_C = set()
-    set_D = set()
-    set_E = set()
-    sets = (set_A, set_B, set_C, set_D, set_E,)
+    set_a = set()
+    set_b = set()
+    set_c = set()
+    set_d = set()
+    set_e = set()
+    sets = (set_a, set_b, set_c, set_d, set_e,)
 
     min_value, max_value = input_section()
     values_range = range(min_value, max_value + 1)
