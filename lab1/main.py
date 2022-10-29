@@ -151,7 +151,7 @@ def input_set(sets: tuple, values_range: range) -> None:
                 f"Введите элемент множества {chr(set_number + 64)}: "
             )
 
-            if value == "стоп":
+            if value is None:
                 return
 
             elif value in values_range:
