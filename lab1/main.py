@@ -4,8 +4,8 @@ from random import randint
 from typing import Optional
 
 
-def choose_set(sets: tuple, max_option: int) -> Optional[int]:
-    """Args: sets - кортеж, max_option - число. Возвращает число, выбранное в
+def choose_set_number(sets: list, max_option: int) -> Optional[int]:
+    """Args: sets - список, max_option - число. Возвращает число, выбранное в
     диапазоне [1, max_option]. Если введено max_option + 1, возвращается None.
     """
     EXIT_VALUE = 6
@@ -24,12 +24,12 @@ def choose_set(sets: tuple, max_option: int) -> Optional[int]:
     return option
 
 
-def contains(sets: tuple) -> None:
+def contains(sets: list) -> None:
     """Функция, выводящая сообщение о содержании введенного числа в выбранном
     множестве. Аргументы: sets - кортеж множеств. Возвращает None.
     """
     value = input_int("\nВведите проверяемое число: ")
-    alias_set = choose_set(sets, 5)
+    alias_set = choose_set_number(sets, 5)
 
     print(f"Число {value}", end="")
     if value not in sets[alias_set - 1]:
@@ -37,31 +37,76 @@ def contains(sets: tuple) -> None:
     print(f" содержится во множестве {chr(64 + alias_set)}")
 
 
-def difference(sets: tuple) -> None:
+def difference(sets: list) -> None:
     """Функция, выводящая результат вычитания множеств.
-    Аргументы: sets - кортеж множеств. Возвращает None.
+    Аргументы: sets - список множеств. Возвращает None.
     """
-    set_1, set_2 = get_sets(sets, 5)
-    if any(i is None for i in (set_1, set_2)):
+    set_1_num, set_2_num = get_sets_numbers(sets, 5)
+    if any(i is None for i in (set_1_num, set_2_num)):
         return
 
     print(
-        f"\nРезультат вычитания из множества {chr(set_1 + 64)} множества "
-        + f"{chr(set_2 + 64)}:", end=" "
+        f"\nРезультат вычитания из множества {chr(set_1_num + 64)} множества "
+        + f"{chr(set_2_num + 64)}:", end=" "
     )
 
-    res = sets[set_1 - 1].difference(sets[set_2 - 1])
-    print("{}") if len(res) == 0 else print(f"{res}")
+    res = list(i for i in sets[set_1_num - 1] if i not in sets[set_2_num - 1])
+    print("{}") if len(res) == 0 else print(f"{set(res)}")
 
 
-def get_sets(sets: tuple, max_option: int = 5) -> tuple:
+def fill_set(sets: list, values_range: range) -> None:
+    """Функция заполнения множества. Аргументы: sets - список множеств,
+    values_range - диапазон значений для заполнения. Позволяет как вводить
+    значения вручную, так и генерировать сразу все множества. Возвращает None.
+    """
+    set_number = choose_set_number(sets, 6)
+
+    if set_number is None:
+        return
+
+    if set_number == 6:
+        for i, _ in enumerate(sets):
+            sets[i] = generate_set(values_range=values_range)
+
+        return
+
+    option = None
+    while option not in (1, 2):
+        option = handle_menu(
+            "\n1. Ввести вручную.\n2. Сгенерировать\n\nВыберите действие: ", 5
+        )
+
+        if option is None:
+            return
+
+    if option == 1:
+        sets[set_number - 1] = input_set(values_range=values_range)
+    elif option == 2:
+        sets[set_number - 1] = generate_set(values_range=values_range)
+
+    print('\nМножество создано.')
+
+
+def generate_set(values_range: range) -> None:
+    """Функция для генерации множества из случайных значений в диапазоне
+    values_range. Возвращает полученное множество типа set."""
+    res = []
+    for _ in range(randint(1, 8)):
+        random_value = randint(values_range[0], values_range[-1])
+        if random_value not in res:
+            res.append(random_value)
+
+    return set(res)
+
+
+def get_sets_numbers(sets: list, max_option: int = 5) -> tuple:
     """Функция для взятия 2-х чисел для определения номеров множеств.
-    Аргументы: sets - кортеж множеств, max_option - верхняя граница диапазона,
+    Аргументы: sets - список множеств, max_option - верхняя граница диапазона,
     по умолчанию 5. Число принадлежит отрезку [1, max_option]. Возвращает
     кортеж, состоящий из выбранных чисел.
     """
-    set_1 = choose_set(sets, max_option)
-    set_2 = choose_set(sets, max_option)
+    set_1 = choose_set_number(sets, max_option)
+    set_2 = choose_set_number(sets, max_option)
 
     return set_1, set_2
 
@@ -73,8 +118,14 @@ def handle_menu(message: str, max_option: int) -> Optional[int]:
     возвращен None.
     """
     option = input_int(message=message)
+    if option is None:
+        return None
+
     if option:
         while (option < 1 or option > max_option):
+            if option < 1 or option > max_option:
+                print('\nНеверное значение, повторите ввод.')
+
             option = input_int(message=message)
 
             if option is None:
@@ -113,73 +164,58 @@ def input_section() -> tuple[int, int]:
 
     while second_value is None or second_value <= first_value:
         second_value = input_int("Введите верхнюю границу области значений: ")
+        if second_value <= first_value:
+            print('Верхняя граница должна быть как минимум не меньше нижней.')
 
     return first_value, second_value
 
 
-def input_set(sets: tuple, values_range: range) -> None:
-    """Функция заполнения множества. Аргументы: sets - кортеж множеств,
-    values_range - диапазон значений для заполнения. Позволяет как вводить
-    значения вручную, так и генерировать сразу все множества. Возвращает None.
+def input_set(values_range: range) -> set:
+    """Функция для ввода элементов множества из диапазона values_range.
+    Возвращает множество типа set.
     """
-    set_number = choose_set(sets, 6)
+    res = []
+    print("\nДля выхода напишите 'стоп'.")
+    while True:
+        value = input_int("Введите элемент множества: ")
 
-    if set_number is None:
-        return
+        if value is None:
+            break
 
-    if set_number == 6:
-        for set_i in sets:
-            for _ in range(randint(1, 8)):
-                set_i.add(randint(values_range[0], values_range[-1]))
+        if value not in values_range:
+            print('Значение не из универсума. Не будет добавлено.')
+        elif value not in res:
+            res.append(value)
 
-        return
-
-    option = None
-    while option not in (1, 2):
-        option = handle_menu(
-            "\n1. Ввести вручную.\n2. Сгенерировать\n\nВыберите действие: ", 5
-        )
-
-        if option is None:
-            return
-
-    alias_set = sets[set_number - 1]
-    if option == 1:
-        print("\nДля выхода напишите 'стоп'.")
-        while True:
-            value = input_int(
-                f"Введите элемент множества {chr(set_number + 64)}: "
-            )
-
-            if value is None:
-                return
-
-            elif value in values_range:
-                alias_set.add(value)
-    else:
-        for _ in range(randint(1, 5)):
-            alias_set.add(randint(values_range[0], values_range[-1]))
+    return set(res)
 
 
-def intersection(sets: tuple) -> None:
-    """Функция пересечения множеств. Аргументы: sets - кортеж множеств.
+def intersection(sets: list) -> None:
+    """Функция пересечения множеств. Аргументы: sets - список множеств.
     Возвращает None.
     """
-    set_1, set_2 = get_sets(sets, 5)
-    if any(i is None for i in (set_1, set_2)):
+    set_1_num, set_2_num = get_sets_numbers(sets, 5)
+    if any(i is None for i in (set_1_num, set_2_num)):
         return
 
     print(
-        f"\nРезультат пересечения множества {chr(64 + set_1)} с множеством"
-        + f" {chr(64 + set_2)}:", end=" "
+        f"\nРезультат пересечения множества {chr(64 + set_1_num)} с множеством"
+        + f" {chr(64 + set_2_num)}:", end=" "
     )
 
-    res = sets[set_1 - 1].intersection(sets[set_2 - 1])
-    print("{}") if len(res) == 0 else print(f"{res}")
+    set_1 = sets[set_1_num - 1]
+    set_2 = sets[set_2_num - 1]
+
+    if len(set_2) > len(set_1):
+        set_1, set_2 = set_2, set_1
+
+    res = list(i for i in set_2 if i in set_1)
+
+    print("{}") if len(res) == 0 else print(f"{set(res)}")
 
 
 def main() -> None:
-    """Главная функция, хранит значения всех множеств, кортежа множеств sets,
+    """Главная функция, хранит значения всех множеств, список множеств sets,
     диапазон значений values_range, и так далее. В этой функции вызываются
     остальные функции в зависимости от выбранного действия. Возвращает None.
     """
@@ -188,14 +224,15 @@ def main() -> None:
     set_c = set()
     set_d = set()
     set_e = set()
-    sets = (set_a, set_b, set_c, set_d, set_e,)
+    sets = [set_a, set_b, set_c, set_d, set_e,]
 
     min_value, max_value = input_section()
     values_range = range(min_value, max_value + 1)
     set_universum = {i for i in values_range}
+    print('\nУниверсум создан.')
 
     options: dict[int, tuple] = {
-        1: (input_set, (sets, values_range,),),
+        1: (fill_set, (sets, values_range,),),
         2: (show_sets, (sets,),),
         3: (union, (sets,),),
         4: (difference, (sets,),),
@@ -226,23 +263,26 @@ def main() -> None:
             raise Exception("Некорректное взаимодействие. Повторите попытку.")
 
 
-def show_addition(sets: tuple, universum: set) -> None:
-    """Функция вывода дополнения множества. Аргументы: sets - кортеж множеств,
+def show_addition(sets: list, universum: set) -> None:
+    """Функция вывода дополнения множества. Аргументы: sets - список множеств,
     universum - множество всех значений. Возвращает None.
     """
-    option = choose_set(sets, 5)
+    set_num = choose_set_number(sets, 5)
 
-    if option is None:
+    if set_num is None:
         return
 
+    sequence = sets[set_num - 1]
+    res = [i for i in universum if i not in sequence]
+
     print(
-        f"\nДополнение множества {chr(option + 64)}: "
-        + f"{universum - sets[option - 1]}"
+        f"\nДополнение множества {chr(set_num + 64)}: "
+        + f"{set(res)}"
     )
 
 
-def show_sets(sets: tuple) -> None:
-    """Функция вывода множеств. Аргументы: sets - кортеж множеств. Возвращает
+def show_sets(sets: list) -> None:
+    """Функция вывода множеств. Аргументы: sets - список множеств. Возвращает
     None.
     """
     print(
@@ -259,38 +299,52 @@ def show_universum(set_universum: set) -> None:
     print(f"\nУниверсум: {set_universum}")
 
 
-def symmetric_difference(sets: tuple) -> None:
+def symmetric_difference(sets: list) -> None:
     """Функция вывода симметрической разности множеств. Аргументы: sets -
-    кортеж множеств. Возвращает None.
+    список множеств. Возвращает None.
     """
-    set_1, set_2 = get_sets(sets, 5)
-    if any(i is None for i in (set_1, set_2)):
+    set_1_num, set_2_num = get_sets_numbers(sets, 5)
+    if any(i is None for i in (set_1_num, set_2_num)):
         return
 
     print(
-        f"\nРезультат симметрической разности множеств {chr(64 + set_1)}"
-        + f" и {chr(64 + set_2)}: ", end=""
+        f"\nРезультат симметрической разности множеств {chr(64 + set_1_num)}"
+        + f" и {chr(64 + set_2_num)}: ", end=""
     )
 
-    res = sets[set_1 - 1].symmetric_difference(sets[set_2 - 1])
-    print("{}") if len(res) == 0 else print(f"{res}")
+    set_1 = sets[set_1_num - 1]
+    set_2 = sets[set_2_num - 1]
+
+    part_1 = [i for i in set_1 if i not in set_2]
+    part_2 = [i for i in set_2 if i not in set_1]
+    res = [*part_1, *part_2]
+
+    print("{}") if len(res) == 0 else print(f"{set(res)}")
 
 
-def union(sets: tuple) -> None:
-    """Функция печати объединения множеств. Аргументы: sets - кортеж множеств.
+def union(sets: list) -> None:
+    """Функция печати объединения множеств. Аргументы: sets - список множеств.
     Возвращает None.
     """
-    set_1, set_2 = get_sets(sets, 5)
-    if any(i is None for i in (set_1, set_2)):
+    set_1_num, set_2_num = get_sets_numbers(sets, 5)
+    if any(i is None for i in (set_1_num, set_2_num)):
         return
 
     print(
-        f"\nОбъединение множеств {chr(64 + set_1)} и {chr(64 + set_2)}:",
+        f"\nОбъединение множеств {chr(64 + set_1_num)} и {chr(64 + set_2_num)}:",
         end=" "
     )
 
-    res = sets[set_1 - 1].union(sets[set_2 - 1])
-    print("{}") if len(res) == 0 else print(f"{res}")
+    set_1 = sets[set_1_num - 1]
+    set_2 = sets[set_2_num - 1]
+
+    if len(set_2) > len(set_1):
+        set_1, set_2 = set_2, set_1
+
+    add = list(i for i in set_2 if i not in set_1)
+    res = [*set_1, *add]
+
+    print("{}") if len(res) == 0 else print(f"{set(res)}")
 
 
 if __name__ == "__main__":
