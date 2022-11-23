@@ -1,4 +1,67 @@
+import itertools
 import re
+
+
+def delete_duplicats(sequence: list[str]):
+    items = [i.split() for i in sequence]
+    res = []
+    items = [list(i.split(' + ')) for i in sequence]
+    for i in items:
+        i.sort()
+        if i not in res:
+            res.append(i)
+
+    return res
+
+
+def equal_tables(mdnf: str, expression: str) -> bool:
+    """"""
+    return get_truth_table(to_expression(mdnf)) == get_truth_table(expression)
+
+
+def get_implicants_expressions(implicants: list[str]) -> list[list[str]]:
+    for i in range(0, len(implicants)):
+        implicants[i] = implicants[i].replace(
+            'X', '!x'
+            ).replace(
+                'Y', '!y'
+            ).replace(
+                'Z', '!z'
+            )
+    combs = [list(i) for i in itertools.permutations(implicants)]
+    res = []
+    count = len(implicants)
+    for perm in combs:
+        for j in range(count, 0, -1):
+            res.append(perm[0:j])
+
+    res = [tuple(i) for i in res]
+    res = [list(i) for i in [*set(res)]]
+
+    for i in range(0, len(res)):
+        res[i] = to_expression(' + '.join(res[i]))
+    return res
+
+
+def get_mdnf(expressions: list[str], expression):
+    res = []
+    for i in expressions:
+        if equal_tables(i.replace('*', ''), expression):
+            res.append(i)
+
+    potencial_mdnfs = delete_duplicats(res)
+    shortest_mdnf_len = get_min_length(potencial_mdnfs)
+
+    return [i for i in potencial_mdnfs if len(i) == shortest_mdnf_len]
+
+
+def get_min_length(sequence: list[list[str]]):
+    min_length = len(sequence[0])
+    for i in sequence:
+        if (new_length := len(i)) < min_length:
+            min_length = new_length
+
+    return min_length
 
 
 def get_permutations(count: int = 3) -> list[str]:
@@ -24,7 +87,7 @@ def get_terms(expresion: str) -> list[str]:
         ).split('+')
 
 
-def get_truth(expression: str):
+def get_truth_table(expression: str):
     res = []
     permutations = get_permutations()
     for permutation in permutations:
@@ -41,9 +104,15 @@ def get_truth(expression: str):
             '!1', '0'
         )
         if eval(result):
-            res.append([x, y, z])
+            res.append([x, y, z, 1])
+        else:
+            res.append([x, y, z, 0])
 
     return res
+
+
+def get_truth(table: list[int]):
+    return [row[0:3] for row in table if row[-1]]
 
 
 def get_variables(expression: str) -> list[str]:
@@ -137,12 +206,19 @@ def main() -> None:
     # expression = 'x*y*!z + x*z' --> xy + xz
 
     expression = input_expression()
-    pdnf = perfect_disjunctive_normal_form(expression)
+    truth_table = get_truth_table(expression)
+    pdnf = perfect_disjunctive_normal_form(truth_table)
     print('СДНФ:', pdnf)
 
     implicants = glue_together_3(get_terms(pdnf))
     success, glue = glue_together_2(implicants)
-    print('МДНФ:', ' + '.join(glue))
+    if success:
+        print('МДНФ:', ' + '.join(glue))
+    else:
+        expressions = get_implicants_expressions(glue)
+        results_mdnf = get_mdnf(expressions, expression)
+        for mdnf in results_mdnf:
+            print('МДНФ:', ' + '.join(mdnf))
 
 
 def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
@@ -166,8 +242,8 @@ def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
     return ''.join(str(i) for i in res[::-1])
 
 
-def perfect_disjunctive_normal_form(expression: str) -> str:
-    truth = get_truth(expression)
+def perfect_disjunctive_normal_form(truth_table: list[int]) -> str:
+    truth = get_truth(truth_table)
     res = ''
     for term in truth:
         x, y, z = term
@@ -176,6 +252,31 @@ def perfect_disjunctive_normal_form(expression: str) -> str:
         res += 'z' if z else '!z'
         res += ' + '
     return res.removesuffix(' + ')
+
+
+def to_expression(expression: str) -> str:
+    """"""
+    # !x!y + !y!z + x!z + xy
+    expression = expression.replace(
+        '!x', 'X'
+        ).replace(
+            '!y', 'Y'
+        ).replace(
+            '!z', 'Z'
+        ).split(' + ')
+
+    for i, group in enumerate(expression):
+        if len(group) > 1:
+            expression[i] = '*'.join([i for i in group])
+        expression[i] = expression[i].replace(
+            'X', '!x'
+            ).replace(
+                'Y', '!y'
+            ).replace(
+                'Z', '!z'
+            )
+
+    return ' + '.join(expression)
 
 
 def validate_expression(expression: str) -> bool:
@@ -190,4 +291,7 @@ def validate_expression(expression: str) -> bool:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print('Something went wrong!', e)
