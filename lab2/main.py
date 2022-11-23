@@ -118,24 +118,31 @@ def glue_together_3(terms: list[str]) -> list[str]:
     return res
 
 
+def input_expression() -> str:
+    while True:
+        expression = input(
+            'Valid symbols: x, y, z, !, *, +\n'
+            + 'For example, x*z + !x*z + x*!y\n'
+            + 'Input your expression: '
+        )
+        print()
+        if validate_expression(expression):
+            break
+    return expression
+
+
 def main() -> None:
     # expression = 'x*z + !x*z + x*!y' --> x!y + z
     # expression = 'x*y*z + x*z' --> xz
-    expression = 'x*y*!z + x*z' # --> xy + xz
-    if not validate_expression(expression):
-        raise ValueError('Incorrect expression!')
+    # expression = 'x*y*!z + x*z' --> xy + xz
 
+    expression = input_expression()
     pdnf = perfect_disjunctive_normal_form(expression)
     print('СДНФ:', pdnf)
 
     implicants = glue_together_3(get_terms(pdnf))
     success, glue = glue_together_2(implicants)
-
-    if success:
-        print('МДНФ:', ' + '.join(glue))
-    else:
-        terms = get_terms(pdnf)
-        print('МДНФ:', ' + '.join(glue))
+    print('МДНФ:', ' + '.join(glue))
 
 
 def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
