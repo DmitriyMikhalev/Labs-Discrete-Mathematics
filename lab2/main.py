@@ -10,8 +10,8 @@ def get_permutations(count: int = 3) -> list[str]:
     return res
 
 
-def get_terms(exp: str) -> list[str]:
-    return exp.replace(
+def get_terms(expresion: str) -> list[str]:
+    return expresion.replace(
         ' ', ''
         ).replace(
             '*', ''
@@ -69,13 +69,33 @@ def glue_together_2(terms: list[str]) -> tuple[bool, list[str]]:
 
     res = [*set(res)]
     res.sort()
+    for i in range(0, len(res)):
+        res[i] = res[i].replace(
+            'X', '!x'
+            ).replace(
+                'Y', '!y'
+            ).replace(
+                'Z', '!z'
+            )
 
     if all(i for i in status):
         return True, res
 
-    for i in status:
-        if not i:
+    # print(f'{res=}')
+    # print(f'{status=}')
+    # print(f'{terms=}')
+    for i in range(0, len(status)):
+        if not status[i]:
             res.append(terms[i])
+    res.sort()
+    for i in range(0, len(res)):
+        res[i] = res[i].replace(
+            'X', '!x'
+            ).replace(
+                'Y', '!y'
+            ).replace(
+                'Z', '!z'
+            )
 
     return False, res
 
@@ -99,18 +119,23 @@ def glue_together_3(terms: list[str]) -> list[str]:
 
 
 def main() -> None:
-    expression = 'x*y + !y*x + x*y'
+    # expression = 'x*z + !x*z + x*!y' --> x!y + z
+    # expression = 'x*y*z + x*z' --> xz
+    expression = 'x*y*!z + x*z' # --> xy + xz
     if not validate_expression(expression):
         raise ValueError('Incorrect expression!')
+
     pdnf = perfect_disjunctive_normal_form(expression)
     print('СДНФ:', pdnf)
-    terms = glue_together_3(get_terms(pdnf))
-    success, glue = glue_together_2(terms)
+
+    implicants = glue_together_3(get_terms(pdnf))
+    success, glue = glue_together_2(implicants)
+
     if success:
         print('МДНФ:', ' + '.join(glue))
     else:
-        # TODO: implicant matrix
-        pass
+        terms = get_terms(pdnf)
+        print('МДНФ:', ' + '.join(glue))
 
 
 def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
