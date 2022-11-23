@@ -3,6 +3,9 @@ import re
 
 
 def delete_duplicats(sequence: list[str]):
+    """
+    Delete duplicates of nested lists.
+    """
     items = [i.split() for i in sequence]
     res = []
     items = [list(i.split(' + ')) for i in sequence]
@@ -15,11 +18,15 @@ def delete_duplicats(sequence: list[str]):
 
 
 def equal_tables(mdnf: str, expression: str) -> bool:
-    """"""
+    """Returns bool variable 'are expressions equal?' using truth tables."""
     return get_truth_table(to_expression(mdnf)) == get_truth_table(expression)
 
 
-def get_implicants_expressions(implicants: list[str]) -> list[list[str]]:
+def get_implicants_expressions(implicants: list[str]) -> list[str]:
+    """
+    Get all implicants expressions. Returns list of expressions, for example:
+    ['!y*!z + x*!z', '!y*!z', 'x*!z + x*y + !x*!y + !y*!z', ...]
+    """
     for i in range(0, len(implicants)):
         implicants[i] = implicants[i].replace(
             'X', '!x'
@@ -40,10 +47,17 @@ def get_implicants_expressions(implicants: list[str]) -> list[list[str]]:
 
     for i in range(0, len(res)):
         res[i] = to_expression(' + '.join(res[i]))
+
     return res
 
 
 def get_mdnf(expressions: list[str], expression):
+    """
+    Returns all mdnf from given expression as list of lists of terms.
+    To get them, list of all expressions is checking for equal truth table, and
+    then duplicates are removing.
+    For example, returns [['!x*!y', 'x*!z', 'x*y'], ['!x*!y', '!y*!z', 'x*y']].
+    """
     res = []
     for i in expressions:
         if equal_tables(i.replace('*', ''), expression):
@@ -56,6 +70,7 @@ def get_mdnf(expressions: list[str], expression):
 
 
 def get_min_length(sequence: list[list[str]]):
+    """Returns the lowest length of nested lists."""
     min_length = len(sequence[0])
     for i in sequence:
         if (new_length := len(i)) < min_length:
@@ -65,6 +80,14 @@ def get_min_length(sequence: list[list[str]]):
 
 
 def get_permutations(count: int = 3) -> list[str]:
+    """
+    Get permutations of 1 and 0 with given count of digits:
+      000
+      001
+      010
+      ...
+    Returns list of permutations.
+    """
     res = ['0' * count]
     for i in range(1, 2**count):
         value = numeral_sys_sum(res[i - 1], '1')
@@ -74,6 +97,11 @@ def get_permutations(count: int = 3) -> list[str]:
 
 
 def get_terms(expresion: str) -> list[str]:
+    """
+    Get terms of expression.
+    Returns list of terms, for example: ['XYz', 'Xyz', 'xYZ', 'xYz', 'xyz']
+    where upper means negative form: X is equal to !x.
+    """
     return expresion.replace(
         ' ', ''
         ).replace(
@@ -87,7 +115,17 @@ def get_terms(expresion: str) -> list[str]:
         ).split('+')
 
 
-def get_truth_table(expression: str):
+def get_truth_table(expression: str) -> list[list[int]]:
+    """
+    Create expression's truth table. Returns list of rows, for example:
+    [
+        [0, 0, 0, 0],
+        [0, 0, 1, 1],
+        [0, 1, 0, 1],
+        ...
+    ]
+    Last row element is a function value.
+    """
     res = []
     permutations = get_permutations()
     for permutation in permutations:
@@ -111,7 +149,8 @@ def get_truth_table(expression: str):
     return res
 
 
-def get_truth(table: list[int]):
+def get_truth(table: list[int]) -> list[list[int]]:
+    """Returns only truth rows from truth table as list of lists(rows)."""
     return [row[0:3] for row in table if row[-1]]
 
 
@@ -123,6 +162,11 @@ def get_variables(expression: str) -> list[str]:
 
 
 def glue_together_2(terms: list[str]) -> tuple[bool, list[str]]:
+    """
+    Glue implicants with length 2 via Quine's algorithm.
+    Returns bool varibale 'all absobed?' and list of implicants with length 1
+    or 2 (if it wasn't absorbed), for example: (False, ['x!y', 'z']).
+    """
     status = [0] * len(terms)
     res = []
     for i, term in enumerate(terms, 1):
@@ -150,12 +194,10 @@ def glue_together_2(terms: list[str]) -> tuple[bool, list[str]]:
     if all(i for i in status):
         return True, res
 
-    # print(f'{res=}')
-    # print(f'{status=}')
-    # print(f'{terms=}')
     for i in range(0, len(status)):
         if not status[i]:
             res.append(terms[i])
+
     res.sort()
     for i in range(0, len(res)):
         res[i] = res[i].replace(
@@ -170,6 +212,11 @@ def glue_together_2(terms: list[str]) -> tuple[bool, list[str]]:
 
 
 def glue_together_3(terms: list[str]) -> list[str]:
+    """
+    Glue implicants with length 3 via Quine's algorithm.
+    Returns list of implicants with length 2
+    For example: ['Xz', 'Yz', 'yz', 'xY', 'xz'].
+    """
     res = []
     for i, term in enumerate(terms, 1):
         comb_1 = [term[0], term[1]]
@@ -188,6 +235,10 @@ def glue_together_3(terms: list[str]) -> list[str]:
 
 
 def input_expression() -> str:
+    """
+    Input expression as str variable. Symbols: x, y, z, !, *, +.
+    Returns given str.
+    """
     while True:
         expression = input(
             'Valid symbols: x, y, z, !, *, +\n'
@@ -221,7 +272,10 @@ def main() -> None:
             print('МДНФ:', ' + '.join(mdnf))
 
 
-def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
+def numeral_sys_sum(a: str, b: str, base: int = 2) -> str:
+    """
+    Get sum of 2 digits with given numeral base (<=10). Returns str result.
+    """
     res = []
     max_len = max(len(a), len(b))
     a = [int(i) for i in a.zfill(max_len)]
@@ -243,6 +297,10 @@ def numeral_sys_sum(a: str, b: str, base: int = 2) -> list[int]:
 
 
 def perfect_disjunctive_normal_form(truth_table: list[int]) -> str:
+    """
+    Get PDNF of given truth table's expression.
+    Return str variable, for example '!x!y!z + !x!yz + !xy!z + x!yz + xyz'.
+    """
     truth = get_truth(truth_table)
     res = ''
     for term in truth:
@@ -255,7 +313,9 @@ def perfect_disjunctive_normal_form(truth_table: list[int]) -> str:
 
 
 def to_expression(expression: str) -> str:
-    """"""
+    """
+    Get expression could be eval. Returns str.
+    """
     # !x!y + !y!z + x!z + xy
     expression = expression.replace(
         '!x', 'X'
@@ -280,6 +340,7 @@ def to_expression(expression: str) -> str:
 
 
 def validate_expression(expression: str) -> bool:
+    """Returns bool variable 'is expression valid?'."""
     correct = 'xyz!+* '
     if expression[-1] not in 'xyz':
         return False
