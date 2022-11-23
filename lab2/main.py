@@ -255,6 +255,7 @@ def main() -> None:
     # expression = 'x*z + !x*z + x*!y' --> x!y + z
     # expression = 'x*y*z + x*z' --> xz
     # expression = 'x*y*!z + x*z' --> xy + xz
+    # expression = 'x*!y + x*z + !x*!y*!z' --> !y!z + xz
 
     expression = input_expression()
     truth_table = get_truth_table(expression)
@@ -269,7 +270,7 @@ def main() -> None:
         expressions = get_implicants_expressions(glue)
         results_mdnf = get_mdnf(expressions, expression)
         for mdnf in results_mdnf:
-            print('МДНФ:', ' + '.join(mdnf))
+            print('МДНФ:', ' + '.join(mdnf).replace('*', ''))
 
 
 def numeral_sys_sum(a: str, b: str, base: int = 2) -> str:
